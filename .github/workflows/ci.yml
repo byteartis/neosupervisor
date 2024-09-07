@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOLANGCILINT_VERSION: v1.58.2
+
+jobs:
+  modules:
+    name: Prepare Modules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+      - name: Download Modules
+        run: go mod download
+
+  docs:
+    needs:
+      - modules
+    name: Generate Docs
+    runs-on: ubuntu-latest
+    steps:
+      # Prepare step
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+      - name: Install gomarkdoc
+        run: go install github.com/princjef/gomarkdoc/cmd/gomarkdoc@v1.1.0
+      - name: Generate docs
+        run: make docs
+      - name: Check if all generated
+        run: |
+          uncommitted=$(git status -s $1 | wc -l)
+          if [ $uncommitted -gt 0 ]
+          then
+            echo >&2 "uncommitted changes at '$1'"
+            exit 1
+          fi
+
+  lint:
+    needs:
+      - modules
+    name: Go Linting
+    runs-on: ubuntu-latest
+    steps:
+      # Prepare step
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+      - name: Lint code
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: ${{ env.GOLANGCILINT_VERSION }}
+          args: --issues-exit-code=0 --out-format=checkstyle:reports/lint-report.xml
+      - name: Store lint reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: ./reports/lint-report.xml
+          retention-days: 1
+          if-no-files-found: error
+
+  test:
+    needs:
+      - modules
+    name: Go Testing
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: "docker:dind"
+    steps:
+      # Prepare step
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+      # Other stuff
+      - name: Install go accurate coverage
+        run: go install github.com/ory/go-acc@v0.2.8
+      - name: Run tests
+        run: go-acc --covermode count -o reports/coverage.out ./... --  -timeout 3m -failfast
+      - name: Store test reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: ./reports/coverage.out
+          retention-days: 1
+          if-no-files-found: error

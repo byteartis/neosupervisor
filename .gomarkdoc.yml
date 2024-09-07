@@ -1,0 +1,7 @@
+output: "{{.Dir}}/README.md"
+embed: true
+
+repository:
+  url: https://github.com/byteartis/neosupervisor
+  defaultBranch: main
+  path: /

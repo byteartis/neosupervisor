@@ -1,0 +1,29 @@
+name: Stale Detection
+on:
+  schedule:
+    - cron: "30 2 * * *"
+
+jobs:
+  close-prs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: read
+    steps:
+      - uses: actions/stale@v9
+        with:
+          # PR stale
+          days-before-pr-stale: 7
+          stale-pr-label: no-pr-activity
+          stale-pr-message: "This PR is stale due to inactivity. If no update is received it will be closed in 7 days."
+          # PR close
+          days-before-pr-close: 7
+          close-pr-message: "PR has been closed because it was stalled for 7 days with no activity."
+          delete-branch: true # delete branch when closing PR
+          exempt-pr-labels: exempt-pr
+          # never interact with issues
+          days-before-issue-stale: -1
+          days-before-issue-close: -1
+          # enable statistics
+          enable-statistics: true

@@ -1,0 +1,217 @@
+linters:
+  disable-all: true
+  enable:
+    # default linters
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    # extra enabled linters
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - containedctx
+    - copyloopvar
+    - depguard
+    - dogsled
+    - durationcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - forcetypeassert
+    - gci
+    - gocheckcompilerdirectives
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - mnd
+    - gomoddirectives
+    - goprintffuncname
+    - gosec
+    - grouper
+    - makezero
+    - musttag
+    - nilerr
+    - nilnil
+    - noctx
+    - nolintlint
+    - nonamedreturns
+    - perfsprint
+    - prealloc
+    - predeclared
+    - reassign
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - stylecheck
+    - tenv
+    - testifylint
+    - testpackage
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+
+linters-settings:
+  depguard:
+    rules:
+      all:
+        list-mode: lax
+        files:
+          - "$all"
+          - "!$test"
+        deny:
+          - pkg: "github.com/stretchr/testify"
+  goconst:
+    min-len: 2
+    min-occurrences: 4
+  gocritic:
+    settings:
+      hugeParam:
+        sizeThreshold: 256
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - dupImport
+      - ifElseChain
+      - octalLiteral
+      - wrapperFunc
+      - unnamedResult
+  gci:
+    custom-order: true
+    sections:
+      - standard
+      - default
+      - prefix(github.com/byteartis)
+      - prefix(github.com/byteartis/neosupervisor)
+      - blank # Blank section: contains all blank imports. This section is not present unless explicitly enabled.
+      - dot # Dot section: contains all dot imports. This section is not present unless explicitly enabled.
+  mnd:
+    settings:
+      mnd:
+        # don't include the "operation" and "assign"
+        checks:
+          - argument
+          - case
+          - condition
+          - return
+  govet:
+    enable:
+      - shadow
+  nolintlint:
+    require-explanation: true # require an explanation for nolint directives
+    require-specific: true # require nolint directives to be specific about which linter is being skipped
+  revive:
+    ignore-generated-header: true
+    confidence: 0.8
+    errorCode: 0
+    warningCode: 0
+    rules:
+      # golint defaults
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-naming
+      - name: error-return
+      - name: error-strings
+      - name: errorf
+      - name: exported
+      - name: increment-decrement
+      - name: indent-error-flow
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: var-declaration
+      - name: var-naming
+      # extra rules
+      - name: deep-exit
+      - name: empty-block
+      - name: if-return
+      - name: superfluous-else
+      - name: unused-parameter
+      # golangci-lint replacers
+      - name: line-length-limit # lll
+        arguments: [140]
+      - name: cyclomatic # gocyclo
+        arguments: [14]
+      - name: cognitive-complexity # gocognit
+        arguments: [16]
+
+# Severity levels to be used with SonarQube
+# - 'error' will tag an issue with type BUG and severity MAJOR
+# - 'warning' will tag an issue with type CODESMELL and severity MAJOR
+# - 'info' will tag an issue with type CODESMELL and severity MINOR
+severity:
+  default-severity: info
+  rules:
+    - linters:
+      - revive
+      severity: '@linter'
+    - linters:
+      - containedctx
+      - errname
+      - errorlint
+      - gocritic
+      - gomoddirectives
+      - grouper
+      - makezero
+      - musttag
+      - nonamedreturns
+      - perfsprint
+      - prealloc
+      - tenv
+      - testifylint
+      - testpackage
+      - thelper
+      - tparallel
+      severity: warning
+    - linters:
+      # default linters
+      - errcheck
+      - govet
+      - staticcheck
+      # other linters
+      - asasalint
+      - asciicheck
+      - bidichk
+      - bodyclose
+      - depguard
+      - durationcheck
+      - errchkjson
+      - errorlint
+      - exhaustive
+      - copyloopvar
+      - forcetypeassert
+      - gci
+      - gocheckcompilerdirectives
+      - gosec
+      - nilerr
+      - noctx
+      - reassign
+      - rowserrcheck
+      - sqlclosecheck
+      severity: error
+
+run:
+  timeout: 15m
+
+# golangci.com configuration
+# https://github.com/golangci/golangci/wiki/Configuration
+service:
+  golangci-lint-version: 1.58.x # use the fixed version to not introduce new linters unexpectedly
+  prepare:
+    - echo "here I can run custom commands, but no preparation needed for this repo"
